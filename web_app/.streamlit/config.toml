@@ -1,0 +1,8 @@
+[server]
+port = 8080
+
+[theme]
+primaryColor="#11879c"
+backgroundColor="#fff2c9"
+secondaryBackgroundColor="#edfcc2"
+textColor="#020704"

@@ -1,0 +1,57 @@
+name: IoT-Weather-App
+
+services:
+  postgres:
+    image: postgres:latest
+    container_name: PostgreSQL-IoT-Weather-DB
+    restart: unless-stopped
+    ports:
+      - "8000:5432"
+    environment:
+      POSTGRES_PASSWORD: iot_admin
+    secrets:
+      - iot_temp_data_gen_password
+      - iot_temp_web_view_password
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./init.sql:/var/init.sql
+    entrypoint:
+      - "/bin/sh"
+      - -ec
+      - |
+        cp /var/init.sql /var/init-temp.sql
+        sed -i "s/data_gen_pass/$(cat /run/secrets/iot_temp_data_gen_password | xargs)/g" /var/init-temp.sql
+        sed -i "s/web_view_pass/$(cat /run/secrets/iot_temp_web_view_password | xargs)/g" /var/init-temp.sql
+        cp /var/init-temp.sql /docker-entrypoint-initdb.d/init.sql
+        exec docker-entrypoint.sh postgres
+  pgadmin4:
+    image: elestio/pgadmin:latest
+    container_name: PGAdmin-Web-App
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8001:5433"
+    environment:
+      PGADMIN_DEFAULT_EMAIL: iot_admin@admin.com
+      PGADMIN_DEFAULT_PASSWORD: iot_admin
+      PGADMIN_LISTEN_PORT: 5433
+  web-app:
+    build: ./web_app
+    container_name: Weather-Data-App
+    restart: unless-stopped
+    depends_on:
+      - postgres
+    ports:
+      - "8080:8080"
+    volumes:
+      - ./secrets:/run/secrets:ro
+
+volumes:
+  pgdata:
+
+secrets:
+  iot_temp_data_gen_password:
+    file: ./secrets/iot_temp_data_gen_password.txt
+  iot_temp_web_view_password:
+    file: ./secrets/iot_temp_web_view_password.txt

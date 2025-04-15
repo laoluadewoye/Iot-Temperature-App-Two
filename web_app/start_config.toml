@@ -1,0 +1,20 @@
+# API configuration
+location_set = [
+    "Bowie",
+    "Laurel",
+    "Upper Marlboro",
+    "Annapolis",
+    "Gaithersburg",
+    "Silver Spring",
+    "Baltimore",
+    "Suitland",
+    "College Park",
+    "Oxon Hill",
+]
+get_air_quality = 'no'
+
+# Other options
+reset_database = 'yes'
+get_historical_data = 'yes'
+sensor_interval_seconds = 3600
+update_interval_seconds = 5

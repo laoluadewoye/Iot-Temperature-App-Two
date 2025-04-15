@@ -1,0 +1,7 @@
+requests
+streamlit
+streamlit-autorefresh
+psycopg2
+sqlalchemy
+pg8000
+pandas
