@@ -34,16 +34,17 @@ DATABASE_CREATION_PROGRESS: float = 0.0
 ENV_DB_HOST = "postgres"
 ENV_DB_NAME = "postgres"
 ENV_DB_USER = "data_generator"
-ENV_DB_PASSWORD = open("/run/secrets/iot_temp_data_gen_password").read().strip()
+ENV_DB_PASSWORD = open("secrets/iot_temp_data_gen_password.txt").read().strip()
 ENV_DB_PORT = 5432
 
 
 def add_sensor_entry(sensor_conn: connection, sensor_api_link: str, conn_lock: Lock,
-                     sensor_name: Union[str, None] = None) -> int:
+                     sensor_name: Union[str, None] = None) -> tuple[int, bool]:
     # Set sensor name
     if sensor_name is None:
         sensor_name = current_thread().name
 
+    name_already_existed = True
     with conn_lock:
         # Check for entry
         sensor_cursor: cursor = sensor_conn.cursor()
@@ -68,13 +69,14 @@ def add_sensor_entry(sensor_conn: connection, sensor_api_link: str, conn_lock: L
             # Commit transaction
             sensor_conn.commit()
             print(f'Added {sensor_name} to database')
+            name_already_existed = False
 
         # Get sensor id
         sensor_cursor.execute('SELECT sensor_id FROM sensors WHERE sensor_name = %s', (sensor_name,))
         sensor_id: int = sensor_cursor.fetchone()[0]
         print('Sensor ID:', sensor_id)
 
-    return sensor_id
+    return sensor_id, name_already_existed
 
 
 def add_sensor_data_entry(sensor_conn: connection, sensor_id: int, sensor_current_info: dict, conn_lock: Lock,
@@ -118,7 +120,7 @@ def weather_detection_service(sensor_loc: str, conn_lock: Lock, stop_event: Even
 
     # Add sensor to database if not exist
     if not stop_event.is_set():
-        sensor_db_id: int = add_sensor_entry(sensor_conn, sensor_api_link, conn_lock)
+        sensor_db_id, _ = add_sensor_entry(sensor_conn, sensor_api_link, conn_lock)
 
     # Start data generation loop
     next_update: datetime = datetime.now()
@@ -165,7 +167,11 @@ def create_historical_data(start_date: Union[datetime, None] = None) -> None:
             f'http://api.weatherapi.com/v1/current.json?key={API_KEY}&q={sensor_location}&aqi={GET_AIR_QUALITY}'
         )
         sensor_name: str = f'sensor_{sensor_location.replace(" ", "_").lower()}'
-        sensor_id: int = add_sensor_entry(hist_conn, sensor_api_link, hist_conn_lock, sensor_name)
+        sensor_id, sensor_already_existed = add_sensor_entry(hist_conn, sensor_api_link, hist_conn_lock, sensor_name)
+
+        if sensor_already_existed:
+            sensors_completed += 1
+            continue
 
         # Loop through historical data
         cur_date: datetime = deepcopy(start_date)

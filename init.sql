@@ -9,7 +9,7 @@ CREATE TABLE sensors (
     sensor_country VARCHAR(50) NOT NULL,
     sensor_lat FLOAT NOT NULL,
     sensor_long FLOAT NOT NULL,
-    sensor_timezone VARCHAR(50) NOT NULL,
+    sensor_timezone VARCHAR(50) NOT NULL
 );
 
 CREATE TABLE weather_data (
@@ -27,7 +27,7 @@ CREATE TABLE weather_data (
     precip_mm FLOAT NOT NULL,
     precip_in FLOAT NOT NULL,
     humidity_perc FLOAT NOT NULL,
-    uv_index_score FLOAT NOT NULL,
+    uv_index_score FLOAT NOT NULL
 );
 
 -- Create data generation user and set permissions
@@ -35,9 +35,13 @@ CREATE ROLE data_generator WITH LOGIN PASSWORD 'data_gen_pass';
 GRANT CONNECT ON DATABASE postgres TO data_generator;
 GRANT USAGE ON SCHEMA public TO data_generator;
 GRANT SELECT, INSERT, UPDATE, DELETE ON ALL TABLES IN SCHEMA public TO data_generator;
+GRANT USAGE, SELECT ON SEQUENCE sensors_sensor_id_seq TO data_generator;
+GRANT USAGE, SELECT ON SEQUENCE weather_data_data_id_seq TO data_generator;
 
 -- Create web viewer user and set permissions
 CREATE ROLE web_viewer WITH LOGIN PASSWORD 'web_view_pass';
 GRANT CONNECT ON DATABASE postgres TO web_viewer;
 GRANT USAGE ON SCHEMA public TO web_viewer;
 GRANT SELECT ON ALL TABLES IN SCHEMA public TO web_viewer;
+GRANT USAGE, SELECT ON SEQUENCE sensors_sensor_id_seq TO web_viewer;
+GRANT USAGE, SELECT ON SEQUENCE weather_data_data_id_seq TO web_viewer;

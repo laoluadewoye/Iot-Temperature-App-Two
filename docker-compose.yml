@@ -44,14 +44,12 @@ services:
       - postgres
     ports:
       - "8080:8080"
-    volumes:
-      - ./secrets:/run/secrets:ro
 
 volumes:
   pgdata:
 
 secrets:
   iot_temp_data_gen_password:
-    file: ./secrets/iot_temp_data_gen_password.txt
+    file: web_app/secrets/iot_temp_data_gen_password.txt
   iot_temp_web_view_password:
-    file: ./secrets/iot_temp_web_view_password.txt
+    file: web_app/secrets/iot_temp_web_view_password.txt
